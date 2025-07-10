@@ -90,7 +90,7 @@ Create a `.env` file in the backend directory:
 ```env
 AZURE_OPENAI_API_KEY=your_api_key_here
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4.1
+AZURE_OPENAI_DEPLOYMENT_NAME=llm-deployment-name(ex. gpt-4.1)
 AZURE_OPENAI_EMBEDDING_MODEL=embedding-model-deployment-name
 AZURE_OPENAI_API_VERSION=2025-04-01-preview
 ```
