@@ -1,6 +1,6 @@
 # Contoso Claims - Multi-Agent Insurance Claims Platform
 
-An **Agentic AI Claims Demo** that leverages multi-agent systems powered by Azure OpenAI (GPT-4.1) to automate and augment end-to-end insurance claim processing. This proof-of-concept demonstrates cutting-edge multi-agent architectures where specialized AI agents collaborate to deliver instant, explainable claim recommendations.
+An **Agentic AI Claims Demo** powered by advanced multi-agent systems leveraging **Langgraph** and **Azure OpenAI (GPT-4.1)**, designed to streamline and enhance the end-to-end insurance claims process. This proof-of-concept showcases a cutting-edge architecture in which specialized AI agents collaboratively assess claims, delivering instant, transparent, and explainable recommendations directly to claims processors. By augmenting human decision-making, the solution significantly accelerates claim handling—reducing processing time from hours to minutes—while enhancing consistency, transparency, and customer satisfaction.
 
 ## 🎯 What This Demo Showcases
 
