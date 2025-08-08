@@ -1,0 +1,69 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+.history/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Root env files
+.env
+.env.*
+!.env.example
+
+# Azure Developer CLI / env
+.azure/
+
+# Kubernetes secrets (keep example)
+k8s/secrets.yaml
+k8s/secrets.*.yaml
+k8s/*secret*.yaml
+!k8s/secrets.example.yaml
+
+# Node/Next.js (frontend)
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.vercel/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Python (backend, worker)
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/.hypothesis/
+**/.venv/
+**/venv/
+
+# Python build artifacts
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Coverage reports
+coverage/
+htmlcov/
+coverage.xml
+.nyc_output/
+
+# Container and local overrides
+.docker/
+docker-compose.override.yml
