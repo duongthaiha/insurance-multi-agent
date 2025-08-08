@@ -1,0 +1,20 @@
+-- Minimal schema for claim artifacts
+CREATE TABLE IF NOT EXISTS claims (
+  claim_id NVARCHAR(64) PRIMARY KEY,
+  status NVARCHAR(32) NOT NULL DEFAULT 'pending',
+  created_at DATETIME2 DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE IF NOT EXISTS claim_images (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  claim_id NVARCHAR(64) NOT NULL,
+  blob_url NVARCHAR(2048) NOT NULL,
+  created_at DATETIME2 DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE IF NOT EXISTS claim_transcripts (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  claim_id NVARCHAR(64) NOT NULL,
+  blob_url NVARCHAR(2048) NOT NULL,
+  created_at DATETIME2 DEFAULT SYSUTCDATETIME()
+);

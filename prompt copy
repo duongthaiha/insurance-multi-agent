@@ -1,0 +1,50 @@
+# Motor Car Insurance Claim Handling System (GPT‑5)
+
+Use these guidelines to design and implement a motor car insurance claim handling system with a real‑time, multi‑agent workflow.
+No need to create python environment
+## Frontend (UX Framework)
+- Front end got a chat interface allow user to chat with the back end using web socket
+- Use streamlit as the framework
+- Front end use web socket to connect with back end
+- Azure Web PubSub for real‑time WebSocket communication.
+- Securely display incident summaries, call transcriptions, and uploaded damage photos.
+
+## Backend API
+
+- Python FastAPI deployed on AKS.
+- Have an websocket to allow front the to connect to
+- Integrate with Azure Web PubSub to maintain active client connections.
+- Store conversation history in Azure Cosmos DB.
+- Store structured claim data (claimant info, incident details, summaries, image refs, status, agent, timestamps) in Azure SQL Database.
+- Store transcription in a blob storage and link to sql
+- Track job states (pending, awaiting_user_input, processing, completed, failed) in Cosmos DB
+- Store uploaded images in Azure Blob Storage and link them to claims in SQL.
+- Endpoints to resume paused jobs when user feedback arrives and to fetch job state and saved context.
+
+## Worker (AKS) — Multi‑agent Autogen Framework
+
+- Python multi‑agent service on AKS using an autogen package orchestration. Use this for documentation https://microsoft.github.io/autogen/stable/user-guide/agentchat-user-guide/index.html
+- Agents with specialized roles:
+  - Claim Handling Agent
+  - LiabilityEvaluator Agent
+  - Communicator Agent
+  - Orchestrator/Planner Agent
+- Worker take the job from Azure Service Bus for local development use Service Bus Emulator
+- Persist intermediate state to Cosmos DB (conversation + agent context) and job state store.
+
+## Operational considerations
+
+- Use Application Insights to applicaiton monitoring
+- Set TTL on intermediate Cosmos DB documents if not needed long‑term.
+- Implement backoff and DLQ for Service Bus; use sessions/partitioning if ordering is required.
+- Secure internal endpoints with mTLS or VNet; use Managed Identity for resource access.
+
+## Deliverables (for implementation)
+
+- FastAPI backend service with Web PubSub integration (receive WebSocket envelopes, send notifications).
+- Next.js frontend for job submission, user prompts, and real‑time updates.
+- Multi‑agent worker scaffolding (Python) with autogen‑style orchestration, Cosmos DB context persistence, and Service Bus integration.
+- SQL schema for claims/results, Cosmos DB document models, job state store schema.
+- Example messages for `UserInputRequested` and `JobCompleted`, plus sample code to resume processing from stored context.
+
+## Note: If you need anything then stop and ask for clairification 

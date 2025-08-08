@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claims-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: claims-backend
+  template:
+    metadata:
+      labels:
+        app: claims-backend
+    spec:
+      containers:
+        - name: api
+          image: <your-registry>/claims-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: WEBPUBSUB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: WEBPUBSUB_CONNECTION_STRING
+            - name: WEBPUBSUB_HUB
+              value: claims
+            - name: COSMOS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: COSMOS_URL
+            - name: COSMOS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: COSMOS_KEY
+            - name: COSMOS_DB
+              value: claimsdb
+            - name: COSMOS_CONTAINER
+              value: conversations
+            - name: SQL_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: SQL_SERVER
+            - name: SQL_DATABASE
+              value: claimsdb
+            - name: SQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: SQL_USER
+            - name: SQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: SQL_PASSWORD
+            - name: BLOB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: claims-secrets
+                  key: BLOB_CONNECTION_STRING
+            - name: BLOB_CONTAINER
+              value: claim-artifacts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: claims-backend
+spec:
+  selector:
+    app: claims-backend
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http

@@ -1,0 +1,129 @@
+# Motor Car Insurance Claim Handling System (GPT‑5)
+
+Use these guidelines to design and implement a motor car insurance claim handling system with a real‑time, multi‑agent workflow.
+
+## Frontend (UX Framework)
+
+- Next.js (React) with SSR/SSG for performance.
+- Tailwind CSS for utility‑first styling.
+- shadcn/ui (Radix UI) for accessible, prebuilt components.
+- Framer Motion for smooth animations and live visual feedback.
+- Azure Web PubSub for real‑time WebSocket communication.
+- Securely display incident summaries, call transcriptions, and uploaded damage photos.
+- Deploy on Azure Kubernetes Service (AKS) alongside backend and worker services.
+
+## Backend API (AKS)
+
+- Python FastAPI deployed on AKS.
+- Integrate with Azure Web PubSub to maintain active client connections.
+- Store conversation history and call transcriptions in Azure Cosmos DB.
+- Store structured claim data (claimant info, incident details, summaries, image refs, status, agent, timestamps) in Azure SQL Database.
+- Track job states (pending, awaiting_user_input, processing, completed, failed) in Cosmos DB
+- Store uploaded images in Azure Blob Storage and link them to claims in SQL.
+- Endpoints to resume paused jobs when user feedback arrives and to fetch job state and saved context.
+
+## Worker (AKS) — Multi‑agent Autogen Framework
+
+- Python multi‑agent service on AKS using an autogen package orchestration.
+- Agents with specialized roles:
+  - Claim Handling Agent
+  - LiabilityEvaluator Agent
+  - Communicator Agent
+  - Orchestrator/Planner Agent
+- Worker take the job from Azure Service Bus for local development use Service Bus Emulator
+- Persist intermediate state to Cosmos DB (conversation + agent context) and job state store.
+
+### Processing pipeline (example)
+
+1. Claim Handling Agent: This is the agent that handling interaction with the end user. It decided when to trigger a claim handling job to the worker by sending the message to the service bus:
+2. LiabilityEvaluator: Combine facts, statements, and image analysis to assess liability (yes/no/uncertain) with rationale and confidence.
+2. Communicator: Craft a structured message to claimant (request more info or explain decision). Requests additional input when uncertainty exists.
+3. Orchestrator/Planner: Coordinate agents, decide next actions, and persist orchestration state.
+
+### Main Journey
+1. User can chat with Claim handling agent.
+2. When user submit a claim for processing then claim handling agent ensure the required data is collected: Claim Summary is compulsory other data might be relevant are call transciption or iamges
+3. Once required data is collected then Claim handling Agent submit a claim processing job with the worker via message in service bus
+
+### User input flow (when additional input is required)
+
+1. Persist current job state and agent contexts into Cosmos DB (jobId, step, agent contexts, entities, evidence, timestamps).
+2. Set job state to `awaiting_user_input` in the job state store.
+3. Make sure you store the state of the multi agent chat room using the documentation from https://microsoft.github.io/autogen/stable/reference/python/autogen_agentchat.state.html
+4. Publish a message to Service Bus Results Topic (or notify Backend) indicating `user_input_requested` with details of what’s needed.
+5. Backend consumes the message and pushes a real‑time notification via Web PubSub to the frontend user or agent UI.
+
+### Resume flow (when user provides input)
+
+1. Backend validates and stores user input in Cosmos DB; updates job context.
+2. Backend sets job state to `processing` and republishes a continuation job to the Service Bus Job Topic referencing saved context (jobId + continuationToken).
+3. Worker loads saved context from Cosmos DB using documentation from https://microsoft.github.io/autogen/stable/reference/python/autogen_agentchat.state.html and resumes orchestration from the stored step.
+
+### Idempotency & concurrency
+
+- Make every agent action idempotent using (jobId, step) markers.
+- Use optimistic concurrency / ETags when updating Cosmos DB documents.
+
+## Message patterns & state model
+
+### Job document (job state store)
+
+```json
+{
+  "jobId": "uuid",
+  "claimId": "CLAIM-123",
+  "status": "pending | awaiting_user_input | processing | completed | failed",
+  "currentStep": "LiabilityEvaluation",
+  "assignedWorker": "worker-abc",
+  "createdAt": "2025-08-08T...Z",
+  "updatedAt": "2025-08-08T...Z",
+  "continuationToken": "...",
+  "lastMessage": "Requesting clearer photos of rear bumper",
+  "retryCount": 0
+}
+```
+
+### WebSocket / Web PubSub envelope
+
+```json
+{
+  "type": "JobSubmitted | UserInputRequested | JobUpdated | JobCompleted",
+  "jobId": "...",
+  "payload": { "note": "depends on type" },
+  "timestamp": "..."
+}
+```
+
+## Workflow (detailed with user‑input loop)
+
+1. Frontend submits CreateClaim + ProcessClaim via WebSocket to Backend. Backend creates claim record and job record (pending) and publishes to Service Bus Job Topic.
+2. Worker processes the job; agents run in a pipeline. Orchestrator persists agent contexts as produced.
+3. If missing/low‑confidence data is detected, Worker persists state, sets status to `awaiting_user_input`, and sends `UserInputRequested` via Service Bus/Backend → Web PubSub to the user.
+4. User responds in the frontend (uploads photos or clarifies). Frontend sends response to Backend via WebSocket.
+5. Backend updates Cosmos DB, sets status to `processing`, and republishes a continuation message to Service Bus referencing saved context.
+6. Worker resumes, reloads contexts from Cosmos DB, and continues until completion.
+7. On success, Worker sets status to `completed`, writes final analysis/results to SQL/Cosmos, and publishes `JobCompleted`. Backend pushes final result to the frontend via Web PubSub.
+
+## Storage mapping
+
+- Azure SQL Database: canonical claim record, final decision, monetary fields, agent assignments.
+- Azure Cosmos DB: conversation transcripts, agent contexts, saved user feedback, and small JSON docs for orchestration.
+- Azure Blob Storage: photos, videos, large artifacts.
+- Azure Table Storage / SQL job table: quick job state and lifecycle counters.
+
+## Operational considerations
+
+- Use Application Insights to trace messages and agent steps; correlate via `jobId`.
+- Set TTL on intermediate Cosmos DB documents if not needed long‑term.
+- Implement backoff and DLQ for Service Bus; use sessions/partitioning if ordering is required.
+- Secure internal endpoints with mTLS or VNet; use Managed Identity for resource access.
+
+## Deliverables (for implementation)
+
+- FastAPI backend service with Web PubSub integration (receive WebSocket envelopes, send notifications).
+- Next.js frontend for job submission, user prompts, and real‑time updates.
+- Multi‑agent worker scaffolding (Python) with autogen‑style orchestration, Cosmos DB context persistence, and Service Bus integration.
+- SQL schema for claims/results, Cosmos DB document models, job state store schema.
+- Example messages for `UserInputRequested` and `JobCompleted`, plus sample code to resume processing from stored context.
+
+## Note: If you need anything then stop and ask for clairification 
